@@ -1,0 +1,122 @@
+@startuml EDK2_CoreProtocols_Class
+title EDK II - Core Protocols & Services (Class Diagram)
+
+skinparam classAttributeIconSize 0
+skinparam class {
+  BackgroundColor #F5F9FF
+  BorderColor #2C5F8D
+  ArrowColor #2C5F8D
+}
+skinparam title {
+  FontSize 30
+  FontStyle bold
+  FontName Arial
+}
+
+
+class EFI_SYSTEM_TABLE {
+  +Hdr : EFI_TABLE_HEADER
+  +FirmwareVendor : CHAR16*
+  +FirmwareRevision : UINT32
+  +ConsoleInHandle : EFI_HANDLE
+  +ConIn : EFI_SIMPLE_TEXT_INPUT_PROTOCOL*
+  +ConsoleOutHandle : EFI_HANDLE
+  +ConOut : EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL*
+  +BootServices : EFI_BOOT_SERVICES*
+  +RuntimeServices : EFI_RUNTIME_SERVICES*
+  +ConfigurationTable : EFI_CONFIGURATION_TABLE*
+}
+
+class EFI_BOOT_SERVICES {
+  +AllocatePages()
+  +FreePages()
+  +AllocatePool()
+  +FreePool()
+  +CreateEvent()
+  +SignalEvent()
+  +InstallProtocolInterface()
+  +UninstallProtocolInterface()
+  +HandleProtocol()
+  +LocateProtocol()
+  +LocateHandleBuffer()
+  +ConnectController()
+  +DisconnectController()
+  +LoadImage()
+  +StartImage()
+  +ExitBootServices()
+}
+
+class EFI_RUNTIME_SERVICES {
+  +GetTime()
+  +SetTime()
+  +GetVariable()
+  +SetVariable()
+  +GetNextVariableName()
+  +ResetSystem()
+  +ConvertPointer()
+  +SetVirtualAddressMap()
+}
+
+class EFI_DRIVER_BINDING_PROTOCOL {
+  +Supported(Controller) : EFI_STATUS
+  +Start(Controller) : EFI_STATUS
+  +Stop(Controller) : EFI_STATUS
+  +Version : UINT32
+  +ImageHandle : EFI_HANDLE
+  +DriverBindingHandle : EFI_HANDLE
+}
+
+class EFI_SIMPLE_FILE_SYSTEM_PROTOCOL {
+  +Revision : UINT64
+  +OpenVolume(Root) : EFI_STATUS
+}
+
+class EFI_FILE_PROTOCOL {
+  +Open(NewHandle, FileName, Mode)
+  +Close()
+  +Read(BufferSize, Buffer)
+  +Write(BufferSize, Buffer)
+  +GetPosition() / SetPosition()
+  +GetInfo() / SetInfo()
+  +Flush()
+}
+
+class EFI_BLOCK_IO_PROTOCOL {
+  +Revision : UINT64
+  +Media : EFI_BLOCK_IO_MEDIA*
+  +Reset()
+  +ReadBlocks()
+  +WriteBlocks()
+  +FlushBlocks()
+}
+
+class EFI_DISK_IO_PROTOCOL {
+  +Revision : UINT64
+  +ReadDisk()
+  +WriteDisk()
+}
+
+class EFI_LOADED_IMAGE_PROTOCOL {
+  +Revision : UINT32
+  +ParentHandle : EFI_HANDLE
+  +SystemTable : EFI_SYSTEM_TABLE*
+  +DeviceHandle : EFI_HANDLE
+  +ImageBase : VOID*
+  +ImageSize : UINT64
+  +Unload()
+}
+
+' Relationships
+EFI_SYSTEM_TABLE "1" *-- "1" EFI_BOOT_SERVICES : contains
+EFI_SYSTEM_TABLE "1" *-- "1" EFI_RUNTIME_SERVICES : contains
+
+EFI_BOOT_SERVICES ..> EFI_DRIVER_BINDING_PROTOCOL : locates / installs
+EFI_BOOT_SERVICES ..> EFI_LOADED_IMAGE_PROTOCOL   : produces on LoadImage
+
+EFI_SIMPLE_FILE_SYSTEM_PROTOCOL --> EFI_FILE_PROTOCOL : opens (root)
+EFI_FILE_PROTOCOL --> EFI_FILE_PROTOCOL : opens (child)
+
+EFI_DISK_IO_PROTOCOL ..> EFI_BLOCK_IO_PROTOCOL : built on top of
+EFI_SIMPLE_FILE_SYSTEM_PROTOCOL ..> EFI_DISK_IO_PROTOCOL : consumes
+
+@enduml

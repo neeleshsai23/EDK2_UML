@@ -1,0 +1,67 @@
+@startuml EDK2_UseCase
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+skinparam title {
+  FontSize 30
+  FontStyle bold
+  FontName Arial
+}
+
+title EDK II - Use Case Diagram
+
+actor "Platform Developer" as PD
+actor "Driver Developer" as DD
+actor "Library Developer" as LD
+actor "OEM / IBV" as OEM
+actor "OS Loader" as OS
+actor "End User" as EU
+
+rectangle "EDK II System" {
+
+  usecase "Define Platform\n(DSC / FDF)" as UC1
+  usecase "Build Firmware Image" as UC2
+  usecase "Develop UEFI Driver\n(INF + C source)" as UC3
+  usecase "Develop Library Instance" as UC4
+  usecase "Consume Library Class" as UC5
+  usecase "Install / Locate Protocol" as UC6
+  usecase "Customize Platform\n(Board-specific config)" as UC7
+  usecase "Boot the System" as UC8
+  usecase "Load OS" as UC9
+  usecase "Invoke UEFI Runtime Services" as UC10
+  usecase "Dispatch Drivers\n(DXE / PEI)" as UC11
+  usecase "Select Boot Option\n(BDS)" as UC12
+}
+
+' Platform Developer
+PD --> UC1
+PD --> UC2
+PD --> UC7
+
+' Driver Developer
+DD --> UC3
+DD --> UC5
+DD --> UC6
+
+' Library Developer
+LD --> UC4
+
+' OEM / IBV
+OEM --> UC7
+OEM --> UC2
+
+' End User triggers boot
+EU --> UC8
+
+' OS Loader
+OS --> UC9
+OS --> UC10
+
+' Include / extend relationships
+UC8 ..> UC11 : <<include>>
+UC8 ..> UC12 : <<include>>
+UC12 ..> UC9  : <<include>>
+UC3  ..> UC6  : <<include>>
+UC2  ..> UC1  : <<include>>
+
+@enduml

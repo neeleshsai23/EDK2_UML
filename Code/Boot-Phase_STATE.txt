@@ -1,0 +1,39 @@
+@startuml EDK2_BootPhases_State
+!theme vibrant
+title EDK II - UEFI Boot Phases (State Diagram)
+
+left to right direction
+
+skinparam state {
+  BackgroundColor #EAF4FF
+  BorderColor #2C5F8D
+  FontStyle bold
+}
+
+skinparam title {
+  FontSize 30
+  FontStyle bold
+  FontName Arial
+}
+
+[*] -right-> SEC : Power On / Reset
+
+state SEC : Security Phase\n- Handle reset vector\n- Init temp RAM (CAR)\n- Locate PEI Core
+state PEI : Pre-EFI Init\n- Dispatch PEIMs\n- Init permanent RAM\n- Build HOB list
+state DXE : Driver Execution Env.\n- Dispatch DXE drivers\n- Install protocols\n- Produce Boot Services
+state BDS : Boot Device Selection\n- Enumerate boot options\n- Connect consoles\n- Launch boot target
+state TSL : Transient System Load\n- OS loader runs\n- Uses Boot Services
+state RT  : Runtime\n- OS is running\n- Only Runtime Services available
+state AL  : After Life\n- Reset / Shutdown
+
+SEC -right-> PEI : Handoff to PEI Core\n(with temp RAM)
+PEI -right-> DXE : HOB list passed\nto DXE IPL
+DXE -right-> BDS : DXE dispatch\ncomplete
+BDS -right-> TSL : Boot option\nselected
+TSL -right-> RT  : ExitBootServices()\ncalled
+RT  -right-> AL  : ResetSystem() /\nShutdown
+AL  -right-> [*]
+
+BDS -up-> DXE : New driver\nconnected (reconnect)
+
+@enduml

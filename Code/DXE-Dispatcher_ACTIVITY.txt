@@ -1,0 +1,63 @@
+@startuml EDK2_DxeDispatcher_Activity
+title EDK II - DXE Dispatcher Algorithm (Activity Diagram)
+
+skinparam activity {
+  BackgroundColor #EAF4FF
+  BorderColor #2C5F8D
+  DiamondBackgroundColor #FFF4CC
+  DiamondBorderColor #2C5F8D
+}
+skinparam title {
+  FontSize 30
+  FontStyle bold
+  FontName Arial
+}
+
+start
+
+:DXE Core initialized;
+:Locate all Firmware Volumes (FVs);
+
+repeat
+  :Scan each FV for DXE drivers;
+  :Read each driver's INF metadata;
+  :Extract DEPEX (Dependency Expression);
+
+  if (Driver already in a queue?) then (no)
+    if (DEPEX = "BEFORE X"?) then (yes)
+      :Insert into "Before" queue;
+    elseif (DEPEX = "AFTER X"?) then (yes)
+      :Insert into "After" queue;
+    elseif (DEPEX is SOR?) then (yes)
+      :Insert into "SOR" queue\n(Schedule On Request);
+    else (normal)
+      :Insert into "Pending" queue;
+    endif
+  endif
+
+  :Evaluate DEPEX of pending drivers;
+
+  if (Any DEPEX evaluates to TRUE?) then (yes)
+    :Move driver(s) to\n"Scheduled" queue;
+  else (no)
+    :Leave in pending;
+  endif
+
+  while (Scheduled queue not empty?) is (yes)
+    :Dequeue next driver;
+    :Load driver image into memory;
+    :Call driver entry point;
+    :Driver installs protocols /\nregisters Driver Binding;
+  endwhile (empty)
+
+  :Re-evaluate pending DEPEXes\n(new protocols may satisfy them);
+
+repeat while (Any driver dispatched\nin last pass?) is (yes)
+->no;
+
+:No more drivers can be dispatched;
+:Hand control to BDS;
+
+stop
+
+@enduml

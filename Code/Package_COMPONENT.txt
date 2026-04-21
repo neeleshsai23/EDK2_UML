@@ -1,0 +1,81 @@
+@startuml EDK2_PackageLandscape_Component
+title EDK II - Package Landscape (Component Diagram)
+
+skinparam component {
+  BackgroundColor #EAF4FF
+  BorderColor #2C5F8D
+  ArrowColor #2C5F8D
+}
+skinparam package {
+  BackgroundColor #F5F9FF
+  BorderColor #2C5F8D
+}
+skinparam title {
+  FontSize 30
+  FontStyle bold
+  FontName Arial
+}
+
+package "MdePkg" as MdePkg {
+  component "Industry Std Headers\n(UEFI / PI Specs)" as StdHdr
+  component "BaseLib" as BaseLib
+  component "BaseMemoryLib" as BaseMemLib
+  component "PrintLib" as PrintLib
+  component "UefiLib" as UefiLib
+  component "Protocol / PPI\nDefinitions" as ProtoDefs
+}
+
+package "MdeModulePkg" as MdeMod {
+  component "PEI Core" as PeiCore
+  component "DXE Core" as DxeCore
+  component "BDS" as BdsMod
+  component "Generic Drivers\n(DiskIo, PartitionDxe,\nFAT, USB stack...)" as Drivers
+  component "HII\n(Human Interface Infra.)" as HII
+}
+
+package "UefiCpuPkg" as CpuPkg {
+  component "CPU / SEC\nSupport" as CpuSec
+}
+
+package "NetworkPkg" as NetPkg {
+  component "Network Stack\n(TCP/IP, HTTP, iSCSI)" as NetStack
+}
+
+package "ShellPkg" as ShellPkg {
+  component "UEFI Shell" as Shell
+}
+
+package "Platform Package\n(OEM-specific)" as PlatPkg {
+  component "Platform DSC/FDF\n+ Board Drivers" as PlatMod
+}
+
+' --- Interfaces exposed by MdePkg ---
+interface "Library Classes" as LC
+interface "Protocol/PPI GUIDs" as PG
+
+MdePkg -- LC
+MdePkg -- PG
+
+' --- Consumers of MdePkg ---
+MdeMod ..> LC  : consumes
+MdeMod ..> PG  : consumes
+CpuPkg ..> LC  : consumes
+NetPkg ..> LC  : consumes
+ShellPkg ..> LC : consumes
+PlatPkg ..> LC  : consumes
+
+' --- Inter-package dependencies ---
+MdeMod  ..> CpuPkg  : uses CPU services
+NetPkg  ..> MdeMod  : builds on DXE Core
+ShellPkg ..> MdeMod : runs on DXE
+PlatPkg ..> MdeMod  : integrates core modules
+PlatPkg ..> NetPkg  : optional
+PlatPkg ..> ShellPkg : optional
+
+' --- Internal flow inside MdeModulePkg ---
+PeiCore --> DxeCore : handoff (HOB list)
+DxeCore --> BdsMod  : after dispatch
+DxeCore --> Drivers : dispatches
+Drivers --> HII     : register UI forms
+
+@enduml

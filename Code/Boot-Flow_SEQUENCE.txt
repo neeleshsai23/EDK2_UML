@@ -1,0 +1,70 @@
+@startuml EDK2_BootFlow_Sequence
+title EDK II - End-to-End Boot Flow (Sequence Diagram)
+
+skinparam sequence {
+  ArrowColor #2C5F8D
+  LifeLineBorderColor #2C5F8D
+  ParticipantBorderColor #2C5F8D
+  ParticipantBackgroundColor #EAF4FF
+}
+skinparam title {
+  FontSize 30
+  FontStyle bold
+  FontName Arial
+}
+
+participant "Reset Vector" as RV
+participant "SEC Core" as SEC
+participant "PEI Core" as PEI
+participant "DXE IPL" as IPL
+participant "DXE Core" as DXE
+participant "BDS" as BDS
+participant "OS Loader" as OSL
+participant "OS Kernel" as OS
+
+RV -> SEC : Jump to SEC entry
+activate SEC
+SEC -> SEC : Setup temporary RAM (CAR)
+SEC -> SEC : Locate PEI Core in FV
+SEC -> PEI : Handoff (TempRAM, BFV)
+deactivate SEC
+
+activate PEI
+PEI -> PEI : Dispatch PEIMs\n(respecting DEPEX)
+PEI -> PEI : Initialize permanent RAM
+PEI -> PEI : Build HOB list
+PEI -> IPL : Load DXE IPL PEIM
+activate IPL
+IPL -> IPL : Switch stack to perm. RAM
+IPL -> DXE : Handoff (HOB list)
+deactivate IPL
+deactivate PEI
+
+activate DXE
+DXE -> DXE : Initialize Boot Services
+DXE -> DXE : Initialize Runtime Services
+DXE -> DXE : Dispatch DXE drivers\n(install protocols)
+DXE -> BDS : Invoke BDS entry point
+deactivate DXE
+
+activate BDS
+BDS -> BDS : Connect consoles
+BDS -> BDS : Enumerate boot options\n(BootOrder NV variable)
+BDS -> OSL : LoadImage() + StartImage()
+deactivate BDS
+
+activate OSL
+OSL -> DXE : Use Boot Services\n(AllocatePages, LocateProtocol)
+OSL -> OSL : Load kernel into memory
+OSL -> DXE : ExitBootServices()
+note right: Point of no return -\nBoot Services gone
+OSL -> OS : Jump to kernel entry
+deactivate OSL
+
+activate OS
+OS -> OS : Set up virtual memory
+OS -> DXE : Call Runtime Services\n(GetVariable, ResetSystem)
+note right: Only Runtime Services\nremain available
+deactivate OS
+
+@enduml
